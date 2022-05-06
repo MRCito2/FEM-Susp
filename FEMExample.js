@@ -10,7 +10,7 @@ resorte.vtas = 10;
 resorte.altura = 315;
 resorte.luz1 = 0;
 resorte.luz2 = 0;
-//FALTA AÑADIR EL SENTIDOOOO!!!!!
+//Add Sentido
 
 //Input elementos (tamaño de malla)
 var nodos_x_vta = 24;
@@ -58,9 +58,9 @@ var inerciapolar = inercia*2; //en mm4
     var Long = [];
 
   //Declarar vectores unitarios axial(x), transversal(z) y vertical(y) del elemento
-    var ax_X]; var unit_zX = []; var unit_yX = [];
-    var ax_Y]; var unit_zY = []; var unit_yY = [];
-    var ax_Z]; var unit_zZ = []; var unit_yZ = [];
+    var unit_xX=[]; var unit_zX = []; var unit_yX = [];
+    var unit_xY=[]; var unit_zY = []; var unit_yY = [];
+    var unit_xZ=[]; var unit_zZ = []; var unit_yZ = [];
 
   //Declarar angulos entre ejes locales (xyz) y globales(XYZ) del elemento
     var ang_xX = []; var ang_zX = []; var ang_yX = [];
