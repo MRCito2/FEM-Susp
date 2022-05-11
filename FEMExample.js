@@ -9,8 +9,6 @@
 
 const { random, randomInt } = require("mathjs");
 const mathjs = require("mathjs");
-var x = mathjs.sqrt(9);
-console.log(x);
 
 /* DATOS DE ENTRADA */
 
@@ -19,9 +17,9 @@ var resorte = {};
 resorte.alambre = 11;
 resorte.dext = 88;
 resorte.vtas = 10;
-resorte.altura = 315;
-resorte.luz1 = 0;
-resorte.luz2 = 0;
+resorte.altura = 310;
+resorte.luz1 = 0; //Extremo Base
+resorte.luz2 = 0; //Extremo Superior
 //Add Sentido
 
 var H_helice = resorte.altura-resorte.alambre;    
@@ -37,12 +35,12 @@ var youngModulus = 206700; //en MPa
 var shearModulus = 79500; //en MPa
 //Input condiciones de contorno
 
-var lownode1 = 2;
-var lownode2 = 11;
-var lownode3 = 20;
-var upnode1 = 174;
-var upnode2 = 182;
-var upnode3 = 190;
+var lownode1 = 1;
+var lownode2 = 9;
+var lownode3 = 17;
+var upnode1 = 225;
+var upnode2 = 233;
+var upnode3 = 241;
 
 //Input Desplazamiento para simulacion
 var deltaY = -20;
@@ -229,7 +227,7 @@ var inerciapolar = inercia*2; //en mm4
          vectorKGlobal[ii]=matrizRigGlobal;
    } //FIN FOR DE OPERACIONES POR ELEMENTO    
 
- //Crear la supermatriz de rigidez del solido
+ //Crear la supermatriz de rigidez del solido (llena de ceros)
    var superMatrix = new Array(nodos*6+18); //Numero de filas de la supermatriz de rigidez: #Nodos * Grados de libertad de cada nodo (son 6 en 3D). Se suman 18 filas más para las condic. contorno
    for (var z = 0; z < superMatrix.length; z++){
      superMatrix[z]=[];
@@ -243,6 +241,8 @@ var inerciapolar = inercia*2; //en mm4
      var matrix = vectorKGlobal[p];
      superMatrix = sumMatrix(superMatrix,matrix,(p-1)*6,(p-1)*6);
    }
+
+
  //Utilización de las condiciones de contorno.
 
    for (var q = 0; q<3 ; q++){
@@ -278,19 +278,19 @@ var inerciapolar = inercia*2; //en mm4
    coef[coef.length-2]=[deltaY];
  
  //Resolver simulacion
- var vect=[];
- for (var bs = 0; bs<1500; bs++){
-   vect[bs]=[];
-    for (var bp = 0; bp<1500; bp++){
-    vect [bs] [bp] = Math.random();
-  }
- }
+ //var vect=[];
+ //for (var bs = 0; bs<1500; bs++){
+ //  vect[bs]=[];
+ //   for (var bp = 0; bp<1500; bp++){
+ //   vect [bs] [bp] = Math.random();
+ // }
+ //}
 
- var inverse = mathjs.inv(vect); 
- //var solut = multiply(inverse,coef);
+ var inverse = mathjs.inv(superMatrix); 
+ var solut = multiply(inverse,coef);
 
  
-console.log(inverse);
+console.log([solut[coef.length-2],solut[coef.length-5],solut[coef.length-8],]);
 
 
 //FUNCIONES
@@ -321,7 +321,7 @@ function Node_coordZ (nodeValue){ //Calcula coordenada Z del nodo. Entrada: Posi
 }
 
 
-function transpose(matrix) {
+function transpose(matrix) { // Devuelve la matriz transpuesta
     return matrix[0].map((col, i) => matrix.map(row => row[i]));
   }
 
