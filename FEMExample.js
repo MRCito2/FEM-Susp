@@ -7,6 +7,10 @@
 //import {multiply} from "./MatrixFunctions.js"
 //import {sumMatrix} from "./MatrixFunctions.js"
 
+const { random, randomInt } = require("mathjs");
+const mathjs = require("mathjs");
+var x = mathjs.sqrt(9);
+console.log(x);
 
 /* DATOS DE ENTRADA */
 
@@ -274,12 +278,19 @@ var inerciapolar = inercia*2; //en mm4
    coef[coef.length-2]=[deltaY];
  
  //Resolver simulacion
+ var vect=[];
+ for (var bs = 0; bs<1500; bs++){
+   vect[bs]=[];
+    for (var bp = 0; bp<1500; bp++){
+    vect [bs] [bp] = Math.random();
+  }
+ }
 
- var inverse = math.inv(superMatrix);
- var solut = multiply(inverse,coef);
+ var inverse = mathjs.inv(vect); 
+ //var solut = multiply(inverse,coef);
 
  
-console.log(solut);
+console.log(inverse);
 
 
 //FUNCIONES
