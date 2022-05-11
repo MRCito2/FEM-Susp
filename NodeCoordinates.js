@@ -1,9 +1,9 @@
-function Node_coordX (nodeValue){ //Calcula coordenada X del nodo. Entrada: Posicion angular en grados sexagesimales.
+export function Node_coordX (nodeValue){ //Calcula coordenada X del nodo. Entrada: Posicion angular en grados sexagesimales.
     var x = R*Math.cos(nodeValue*Math.PI/180);
     return x;
   }
  
-  function Node_coordY (nodeValue){ //Calcula coordenada Y del nodo. Entrada: Posicion angular en fraccion de vuelta.
+export function Node_coordY (nodeValue){ //Calcula coordenada Y del nodo. Entrada: Posicion angular en fraccion de vuelta.
   //var nodeValue = 1/24;
     var y;
     if (nodeValue<=1){
@@ -17,7 +17,7 @@ function Node_coordX (nodeValue){ //Calcula coordenada X del nodo. Entrada: Posi
     return y;
   }
  
-  function Node_coordZ (nodeValue){ //Calcula coordenada Z del nodo. Entrada: Posicion angular en grados sexagesimales.
+export function Node_coordZ (nodeValue){ //Calcula coordenada Z del nodo. Entrada: Posicion angular en grados sexagesimales.
     var z = -R*Math.sin(nodeValue*Math.PI/180);
     return z;
   }
