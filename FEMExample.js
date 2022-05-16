@@ -43,7 +43,7 @@ var upnode2 = 233;
 var upnode3 = 241;
 
 //Input Desplazamiento para simulacion
-var deltaY = -20;
+var deltaY;
 
 //Calculos de geometría
 var area = 0.25*Math.PI*Math.pow(resorte.alambre,2); //en mm2
@@ -268,29 +268,54 @@ var inerciapolar = inercia*2; //en mm4
 
    }
    
- // Vector de coeficientes independientes:
-   var coef = [];
-   for (var pp = 0; pp< superMatrix.length; pp++){
-     coef.push([0]);
+ //CONFIGURACION DE LA SIMULACION
+ //Se determinan cuantas simulaciones se harán (cuantos desplazamientos), a traves de un for.
+ //Dentro del for se calcula el vector solucion "solut", luego se ordena en displaceMatrix y forceMatrix
+ //StoreForces es un array que almacena las matrices de fuerza forceMatrix de cada simulación.
+ 
+ var storeForces = [];
+ for (var jj = 25; jj<=150 ; jj=jj+25){ //Se configura la simulacion y el incremento de desplazamiento vertical
+  deltaY = -jj; 
+  var coef = [];
+     for (var pp = 0; pp< superMatrix.length; pp++){
+       coef.push([0]);
+     }
+     coef[coef.length-8]=[deltaY];
+     coef[coef.length-5]=[deltaY];
+     coef[coef.length-2]=[deltaY];
+   
+   //Resolver simulacion
+   var inverse = mathjs.inv(superMatrix); 
+   var solut = multiply(inverse,coef);
+   
+   //Matriz de desplazamientos!
+   var displaceMatrix = [];
+   var w = 0
+    for (var v = 0; v<nodos ; v++){ //La matriz tendrá un numero de filas igual al numero de nodos
+       var displaceVect = [];
+       for (var uu = 0; uu<6 ; uu++){ //Cada fila tendrá los siguientes elementos en orden: Desplazamientos en X,Y,Z, y Rotaciones en X,Y,Z.
+        displaceVect.push(solut[w][0]);
+        w = w+1
+       }
+       displaceMatrix[v] = displaceVect;
+      }
+   
+   //Matriz de fuerzas en los nodos de las condiciones de contorno
+   var forceMatrix = [];
+   
+    for (var vv = 0; vv<6 ; vv++){ //Son 6 nodos de las condiciones de contorno. Esta matriz tendra 6 filas. 
+       var forceVect = [];
+       for (var uv = 0; uv<3 ; uv++){ // Cada fila tendra las fuerzas X,Y,Z de los resortes
+        forceVect.push(solut[w][0]);
+        w = w+1;
+       }
+       forceMatrix[vv] = forceVect;
+      }
+   
+    storeForces.push(forceMatrix);
    }
-   coef[coef.length-8]=[deltaY];
-   coef[coef.length-5]=[deltaY];
-   coef[coef.length-2]=[deltaY];
- 
- //Resolver simulacion
- //var vect=[];
- //for (var bs = 0; bs<1500; bs++){
- //  vect[bs]=[];
- //   for (var bp = 0; bp<1500; bp++){
- //   vect [bs] [bp] = Math.random();
- // }
- //}
 
- var inverse = mathjs.inv(superMatrix); 
- var solut = multiply(inverse,coef);
-
- 
-console.log([solut[coef.length-2],solut[coef.length-5],solut[coef.length-8],]);
+  console.log(storeForces);
 
 
 //FUNCIONES
