@@ -267,13 +267,14 @@ var inerciapolar = inercia*2; //en mm4
      superMatrix[(upnode3-1)*6+q][nodos*6 + q + 15] = -1 
 
    }
-   
+  
  //CONFIGURACION DE LA SIMULACION
  //Se determinan cuantas simulaciones se harán (cuantos desplazamientos), a traves de un for.
  //Dentro del for se calcula el vector solucion "solut", luego se ordena en displaceMatrix y forceMatrix
  //StoreForces es un array que almacena las matrices de fuerza forceMatrix de cada simulación.
  
  var storeForces = [];
+ var storeDispl = [];
  for (var jj = 25; jj<=150 ; jj=jj+25){ //Se configura la simulacion y el incremento de desplazamiento vertical
   deltaY = -jj; 
   var coef = [];
@@ -305,7 +306,7 @@ var inerciapolar = inercia*2; //en mm4
    
     for (var vv = 0; vv<6 ; vv++){ //Son 6 nodos de las condiciones de contorno. Esta matriz tendra 6 filas. 
        var forceVect = [];
-       for (var uv = 0; uv<3 ; uv++){ // Cada fila tendra las fuerzas X,Y,Z de los resortes
+       for (var uv = 0; uv<3 ; uv++){ // Cada fila tendra las fuerzas X,Y,Z de los nodos
         forceVect.push(solut[w][0]);
         w = w+1;
        }
@@ -313,18 +314,89 @@ var inerciapolar = inercia*2; //en mm4
       }
    
     storeForces.push(forceMatrix);
+    storeDispl.push(displaceMatrix);
    }
 
   console.log(storeForces);
 
 
-//FUNCIONES
-//Comentar lo de abajo cuando funcione lo de separar las hojas
+// Obtener las nuevas coordenadas X,Y,Z de los nodos post-deformación. DEBE REVISARSE!
 
-function Node_coordX (nodeValue){ //Calcula coordenada X del nodo. Entrada: Posicion angular en grados sexagesimales.
-  var x = R*Math.cos(nodeValue*Math.PI/180);
-  return x;
+var displaceMatrix1 = storeDispl[0];
+var forceMatrix1 = storeForces[0];
+
+for (var ii = 1; ii<nodos; ii++){
+
+  var newNodeX = []; 
+  var newNodeY = [];
+  var newNodeZ = [];
+  
+  newNodeX[ii-1]= nodeX[ii-1]+displaceMatrix1[ii-1][0];
+  newNodeY[ii-1]= nodeY[ii-1]+displaceMatrix1[ii-1][1];
+  newNodeZ[ii-1]= nodeZ[ii-1]+displaceMatrix1[ii-1][2];
+  
+  var newElemX=[]; 
+  var newElemY=[]; 
+  var newElemZ=[];
+  var newLong= [];
+  
+  newElemX[ii] = newNodeX[ii]-newNodeX[ii-1];
+  newElemY[ii] = newNodeY[ii]-newNodeY[ii-1];
+  newElemZ[ii] = newNodeZ[ii]-newNodeZ[ii-1];
+  
+  //Obtener las nuevas longitudes de los nodos
+  newLong[ii] = Math.pow(Math.pow(newElemX[ii],2)+Math.pow(newElemY[ii],2)+Math.pow(newElemZ[ii],2),0.5);
+  
+  
+  //Obtener las direcciones e-n-s en cada nodo
+  
+  //Direccion tangencial = direccion axial del elemento DEFORMADO. LAS DEMAS DIRECCIONES SERAN LAS PERPENDICULARES. MISMO PROCEDIMIENTO INICIAL PERO CON LOS DESPLAZAMIENTOS INCLUIDOS.
+  
+  //Declarar vectores unitarios axial(x), transversal(z) y vertical(y) del elemento
+  var newUnit_xX = []; var newUnit_zX = []; var newUnit_yX = [];
+  var newUnit_xY = []; var newUnit_zY = []; var newUnit_yY = [];
+  var newUnit_xZ = []; var newUnit_zZ = []; var newUnit_yZ = [];
+  
+  //Declarar angulos entre ejes locales (xyz) y globales(XYZ) del elemento
+  // var newAng_xX = []; var newAng_zX = []; var newAng_yX = [];
+  // var newAng_xY = []; var newAng_zY = []; var newAng_yY = [];
+  // var newAng_xZ = []; var newAng_zZ = []; var newAng_yZ = [];
+ 
+ //Unitario direccion axial (x = s)
+ newUnit_xX[ii]=newElemX[ii]/newLong[ii]; //u_sx
+ newUnit_xY[ii]=newElemY[ii]/newLong[ii]; //u_sy
+ newUnit_xZ[ii]=newElemZ[ii]/newLong[ii]; //u_sz
+ 
+ //Unitario direccion transversal (z = e)
+ newUnit_zX[ii]=-newUnit_xZ[ii]/Math.abs(newUnit_xZ[ii])*Math.pow(Math.pow(newUnit_xZ[ii],2)/(Math.pow(newUnit_xZ[ii],2)+Math.pow(newUnit_xX[ii],2)),0.5);
+ newUnit_zY[ii]=0;
+ newUnit_zZ[ii]=newUnit_xX[ii]/Math.abs(newUnit_xX[ii])*Math.pow(Math.pow(newUnit_xX[ii],2)/(Math.pow(newUnit_xZ[ii],2)+Math.pow(newUnit_xX[ii],2)),0.5);
+         
+ //Unitario direccion vertical (y = n)
+    newUnit_yX[ii]=newUnit_xZ[ii]*newUnit_zY[ii]-newUnit_xY[ii]*newUnit_zZ[ii];     //u_nx
+    newUnit_yY[ii]=newUnit_xX[ii]*newUnit_zZ[ii]-newUnit_xZ[ii]*newUnit_zX[ii];     //u_ny
+    newUnit_yZ[ii]=-(newUnit_xX[ii]*newUnit_zY[ii]-newUnit_xY[ii]*newUnit_zX[ii]);  //u_nz
+    
 }
+
+//EQUILIBRIO APLICANDO CORTE EN NODO ii
+
+  ii = 120;
+  //SUMATORIA DE FUERZAS:
+
+  var matrixSumF = [[newUnit_xX[ii], newUnit_yX[ii], newUnit_zX[ii]],[[newUnit_xY[ii], newUnit_yY[ii], newUnit_zY[ii]]],[[newUnit_xZ[ii], newUnit_yZ[ii], newUnit_zZ[ii]]]];
+  var coefF;
+
+
+
+
+    //FUNCIONES
+    //Comentar lo de abajo cuando funcione lo de separar las hojas
+    
+    function Node_coordX (nodeValue){ //Calcula coordenada X del nodo. Entrada: Posicion angular en grados sexagesimales.
+      var x = R*Math.cos(nodeValue*Math.PI/180);
+      return x;
+    }
 
 function Node_coordY (nodeValue){ //Calcula coordenada Y del nodo. Entrada: Posicion angular en fraccion de vuelta.
 //var nodeValue = 1/24;
