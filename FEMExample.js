@@ -33,14 +33,14 @@ var R = (resorte.dext-resorte.alambre)/2;
 //Input datos material
 var youngModulus = 206700; //en MPa
 var shearModulus = 79500; //en MPa
-//Input condiciones de contorno
+//Input condiciones de contorno. Se coloca el numero de nodo que se usaran. El numero de nodo puede ir desde 0 hasta nodos_x_vta * vtas totales, inclusive.
 
-var lownode1 = 1;
-var lownode2 = 9;
-var lownode3 = 17;
-var upnode1 = 225;
-var upnode2 = 233;
-var upnode3 = 241;
+var lownode1 = 0;
+var lownode2 = 8;
+var lownode3 = 16;
+var upnode1 = 224;
+var upnode2 = 232;
+var upnode3 = 240;
 
 //Input Desplazamiento para simulacion
 var deltaY;
@@ -93,7 +93,7 @@ var inerciapolar = inercia*2; //en mm4
     var vectorKGlobal=[];
 
  //OPERACIONES POR ELEMENTO   
-   for (var ii=1; ii<nodos; ii++){
+   for (var ii=1; ii<nodos; ii++){ //El indice ii cuenta los elementos. No existe "elemento 0". Sí existe "nodo 0".
    
      var matrizRigLocal = new Array(12);
      var matrizTransCoord = new Array(12);      
@@ -247,24 +247,24 @@ var inerciapolar = inercia*2; //en mm4
 
    for (var q = 0; q<3 ; q++){
     //UX, UY, UZ de los nodos de la base
-     superMatrix[nodos*6 + q][(lownode1-1)*6+q] = 1;
-     superMatrix[nodos*6 + q + 3][(lownode2-1)*6+q] = 1;
-     superMatrix[nodos*6 + q + 6][(lownode3-1)*6+q] = 1;
+     superMatrix[nodos*6 + q][(lownode1)*6+q] = 1;
+     superMatrix[nodos*6 + q + 3][(lownode2)*6+q] = 1;
+     superMatrix[nodos*6 + q + 6][(lownode3)*6+q] = 1;
 
     //UX, UY, UZ de los nodos del tope
-     superMatrix[nodos*6 + q + 9][(upnode1-1)*6+q] = 1;
-     superMatrix[nodos*6 + q + 12][(upnode2-1)*6+q] = 1;
-     superMatrix[nodos*6 + q + 15][(upnode3-1)*6+q] = 1;
+     superMatrix[nodos*6 + q + 9][(upnode1)*6+q] = 1;
+     superMatrix[nodos*6 + q + 12][(upnode2)*6+q] = 1;
+     superMatrix[nodos*6 + q + 15][(upnode3)*6+q] = 1;
 
     //FX, FY, FZ de los nodos de la base
-     superMatrix[(lownode1-1)*6+q][nodos*6 + q] = -1;
-     superMatrix[(lownode2-1)*6+q][nodos*6 + q + 3] = -1;
-     superMatrix[(lownode3-1)*6+q][nodos*6 + q + 6] = -1;
+     superMatrix[(lownode1)*6+q][nodos*6 + q] = -1;
+     superMatrix[(lownode2)*6+q][nodos*6 + q + 3] = -1;
+     superMatrix[(lownode3)*6+q][nodos*6 + q + 6] = -1;
      
     //FX, FY, FZ de los nodos del tope
-     superMatrix[(upnode1-1)*6+q][nodos*6 + q + 9] = -1;
-     superMatrix[(upnode2-1)*6+q][nodos*6 + q + 12] = -1;
-     superMatrix[(upnode3-1)*6+q][nodos*6 + q + 15] = -1 
+     superMatrix[(upnode1)*6+q][nodos*6 + q + 9] = -1;
+     superMatrix[(upnode2)*6+q][nodos*6 + q + 12] = -1;
+     superMatrix[(upnode3)*6+q][nodos*6 + q + 15] = -1 
 
    }
   
@@ -272,10 +272,12 @@ var inerciapolar = inercia*2; //en mm4
  //Se determinan cuantas simulaciones se harán (cuantos desplazamientos), a traves de un for.
  //Dentro del for se calcula el vector solucion "solut", luego se ordena en displaceMatrix y forceMatrix
  //StoreForces es un array que almacena las matrices de fuerza forceMatrix de cada simulación.
+ //StoreDispl es un array que almacena las matrices de desplazamiento displaceMatrix de cada simulación
  
  var storeForces = [];
  var storeDispl = [];
- for (var jj = 25; jj<=150 ; jj=jj+25){ //Se configura la simulacion y el incremento de desplazamiento vertical
+ //for (var jj = 25; jj<=150 ; jj=jj+25){ //Se configura la simulacion y el incremento de desplazamiento vertical
+  var jj=25;
   deltaY = -jj; 
   var coef = [];
      for (var pp = 0; pp< superMatrix.length; pp++){
@@ -294,7 +296,7 @@ var inerciapolar = inercia*2; //en mm4
    var w = 0
     for (var v = 0; v<nodos ; v++){ //La matriz tendrá un numero de filas igual al numero de nodos
        var displaceVect = [];
-       for (var uu = 0; uu<6 ; uu++){ //Cada fila tendrá los siguientes elementos en orden: Desplazamientos en X,Y,Z, y Rotaciones en X,Y,Z.
+       for (var uu = 0; uu<6 ; uu++){ //Cada fila tendrá los siguientes elementos en orden: Desplazamientos en X,Y,Z, y Rotaciones en X,Y,Z. (6 columnas en total)
         displaceVect.push(solut[w][0]);
         w = w+1
        }
@@ -306,7 +308,7 @@ var inerciapolar = inercia*2; //en mm4
    
     for (var vv = 0; vv<6 ; vv++){ //Son 6 nodos de las condiciones de contorno. Esta matriz tendra 6 filas. 
        var forceVect = [];
-       for (var uv = 0; uv<3 ; uv++){ // Cada fila tendra las fuerzas X,Y,Z de los nodos
+       for (var uv = 0; uv<3 ; uv++){ // Cada fila tendra las fuerzas X,Y,Z de los nodos (3 columnas)
         forceVect.push(solut[w][0]);
         w = w+1;
        }
@@ -315,82 +317,203 @@ var inerciapolar = inercia*2; //en mm4
    
     storeForces.push(forceMatrix);
     storeDispl.push(displaceMatrix);
-   }
+   //}
 
-  console.log(storeForces);
+  //console.log(storeForces);
 
 
-// Obtener las nuevas coordenadas X,Y,Z de los nodos post-deformación. DEBE REVISARSE!
+/* POST-SIMULACIÓN */
 
+//RECÁLCULO DE COORDENADAS X,Y,Z DE CADA NODO.
+
+//Como primer ejemplo, se tomara una de las simulaciones realizadas:
 var displaceMatrix1 = storeDispl[0];
 var forceMatrix1 = storeForces[0];
 
-for (var ii = 1; ii<nodos; ii++){
+var newNodeX = []; 
+var newNodeZ = [];
+var newNodeY = [];
+var newElemX=[]; 
+var newElemY=[]; 
+var newElemZ=[];
+var newLong= [];
 
-  var newNodeX = []; 
-  var newNodeY = [];
-  var newNodeZ = [];
+var u_sX = []; var u_eX = []; var u_nX = [];
+var u_sY = []; var u_eY = []; var u_nY = [];
+var u_sZ = []; var u_eZ = []; var u_nZ = [];
+
+newNodeX[0]= NodeX[0]+displaceMatrix1[0][0];
+newNodeY[0]= NodeY[0]+displaceMatrix1[0][1];
+newNodeZ[0]= NodeZ[0]+displaceMatrix1[0][2];
+for (var ii = 0; ii<nodos; ii++){ //Se itera desde ii=1 . ii contarìa los Elementos: Va desde 1 hasta nodos_x_vta*vtas. Para nodos, el contador va desde 0.
+
+  //Se nombran coordenadas X,Y,Z de cada nodo.
   
-  newNodeX[ii-1]= nodeX[ii-1]+displaceMatrix1[ii-1][0];
-  newNodeY[ii-1]= nodeY[ii-1]+displaceMatrix1[ii-1][1];
-  newNodeZ[ii-1]= nodeZ[ii-1]+displaceMatrix1[ii-1][2];
+  //Se calculan las coordenadas para un nodo, tomando los desplazamientos obtenidos en la simulacion.
+  if(ii>0){
+
+    newNodeX[ii]= NodeX[ii]+displaceMatrix1[ii][0];
+    newNodeY[ii]= NodeY[ii]+displaceMatrix1[ii][1];
+    newNodeZ[ii]= NodeZ[ii]+displaceMatrix1[ii][2];
   
-  var newElemX=[]; 
-  var newElemY=[]; 
-  var newElemZ=[];
-  var newLong= [];
+    
+    
+    
+    //Se calculan las componentes X,Y,Z del ELEMENTO.
+    newElemX[ii] = newNodeX[ii]-newNodeX[ii-1];
+    newElemY[ii] = newNodeY[ii]-newNodeY[ii-1];
+    newElemZ[ii] = newNodeZ[ii]-newNodeZ[ii-1];
+    
+    //Obtener las nuevas longitudes de cada ELEMENTO.
+    newLong[ii] = Math.pow(Math.pow(newElemX[ii],2)+Math.pow(newElemY[ii],2)+Math.pow(newElemZ[ii],2),0.5);
+    
+    
+    
+    //Obtener las direcciones e-n-s en cada nodo
+    //Direccion tangencial = direccion axial del elemento DEFORMADO. LAS DEMAS DIRECCIONES SERAN LAS PERPENDICULARES. MISMO PROCEDIMIENTO INICIAL PERO CON LOS DESPLAZAMIENTOS INCLUIDOS.
+    
+    //CALCULO DE NUEVAS DIRECCIONES DE EJES LOCALES PARA CADA ELEMENTO:  
   
-  newElemX[ii] = newNodeX[ii]-newNodeX[ii-1];
-  newElemY[ii] = newNodeY[ii]-newNodeY[ii-1];
-  newElemZ[ii] = newNodeZ[ii]-newNodeZ[ii-1];
-  
-  //Obtener las nuevas longitudes de los nodos
-  newLong[ii] = Math.pow(Math.pow(newElemX[ii],2)+Math.pow(newElemY[ii],2)+Math.pow(newElemZ[ii],2),0.5);
-  
-  
-  //Obtener las direcciones e-n-s en cada nodo
-  
-  //Direccion tangencial = direccion axial del elemento DEFORMADO. LAS DEMAS DIRECCIONES SERAN LAS PERPENDICULARES. MISMO PROCEDIMIENTO INICIAL PERO CON LOS DESPLAZAMIENTOS INCLUIDOS.
-  
-  //Declarar vectores unitarios axial(x), transversal(z) y vertical(y) del elemento
-  var newUnit_xX = []; var newUnit_zX = []; var newUnit_yX = [];
-  var newUnit_xY = []; var newUnit_zY = []; var newUnit_yY = [];
-  var newUnit_xZ = []; var newUnit_zZ = []; var newUnit_yZ = [];
-  
-  //Declarar angulos entre ejes locales (xyz) y globales(XYZ) del elemento
-  // var newAng_xX = []; var newAng_zX = []; var newAng_yX = [];
-  // var newAng_xY = []; var newAng_zY = []; var newAng_yY = [];
-  // var newAng_xZ = []; var newAng_zZ = []; var newAng_yZ = [];
- 
+//Declarar vectores unitarios axial(x = s), transversal(z = e) y vertical(y = n) del elemento
+
+
  //Unitario direccion axial (x = s)
- newUnit_xX[ii]=newElemX[ii]/newLong[ii]; //u_sx
- newUnit_xY[ii]=newElemY[ii]/newLong[ii]; //u_sy
- newUnit_xZ[ii]=newElemZ[ii]/newLong[ii]; //u_sz
+ u_sX[ii]=newElemX[ii]/newLong[ii]; //u_sx
+ u_sY[ii]=newElemY[ii]/newLong[ii]; //u_sy
+ u_sZ[ii]=newElemZ[ii]/newLong[ii]; //u_sz
  
  //Unitario direccion transversal (z = e)
- newUnit_zX[ii]=-newUnit_xZ[ii]/Math.abs(newUnit_xZ[ii])*Math.pow(Math.pow(newUnit_xZ[ii],2)/(Math.pow(newUnit_xZ[ii],2)+Math.pow(newUnit_xX[ii],2)),0.5);
- newUnit_zY[ii]=0;
- newUnit_zZ[ii]=newUnit_xX[ii]/Math.abs(newUnit_xX[ii])*Math.pow(Math.pow(newUnit_xX[ii],2)/(Math.pow(newUnit_xZ[ii],2)+Math.pow(newUnit_xX[ii],2)),0.5);
-         
+ u_eX[ii]=-u_sZ[ii]/Math.abs(u_sZ[ii])*Math.pow(Math.pow(u_sZ[ii],2)/(Math.pow(u_sZ[ii],2)+Math.pow(u_sX[ii],2)),0.5);       //u_ex
+ u_eY[ii]=0;                                                                                                                 //u_ey
+ u_eZ[ii]=u_sX[ii]/Math.abs(u_sX[ii])*Math.pow(Math.pow(u_sX[ii],2)/(Math.pow(u_sZ[ii],2)+Math.pow(u_sX[ii],2)),0.5);        //u_eZ
+ 
  //Unitario direccion vertical (y = n)
-    newUnit_yX[ii]=newUnit_xZ[ii]*newUnit_zY[ii]-newUnit_xY[ii]*newUnit_zZ[ii];     //u_nx
-    newUnit_yY[ii]=newUnit_xX[ii]*newUnit_zZ[ii]-newUnit_xZ[ii]*newUnit_zX[ii];     //u_ny
-    newUnit_yZ[ii]=-(newUnit_xX[ii]*newUnit_zY[ii]-newUnit_xY[ii]*newUnit_zX[ii]);  //u_nz
+    u_nX[ii]=u_sZ[ii]*u_eY[ii]-u_sY[ii]*u_eZ[ii];     //u_nx
+    u_nY[ii]=u_sX[ii]*u_eZ[ii]-u_sZ[ii]*u_eX[ii];     //u_ny
+    u_nZ[ii]=-(u_sX[ii]*u_eY[ii]-u_sY[ii]*u_eX[ii]);  //u_nz
     
-}
+  }
+  } //Fin del For para cada elemento
+  
+//console.log(newNodeX);
+//console.log(newElemY);
+//console.log(newLong);
 
-//EQUILIBRIO APLICANDO CORTE EN NODO ii
 
-  ii = 120;
+//EQUILIBRIO DE UNA PARTE DEL RESORTE, APLICANDO CORTE EN NODO ii
+var acumvect =[];
+  for(ii=0;ii<nodos;ii++){
+
+    
+    //Coordenadas XYZ del nodo donde se corta el resorte
+  var x_cut = newNodeX[ii];
+  var y_cut = newNodeY[ii];
+  var z_cut = newNodeZ[ii];
+  
+  //Fuerzas en x, y, z sobre los 3 nodos de la base, que se usaron para las condiciones de contorno
+  var f_ix = forceMatrix1[0][0];    
+  var f_iy = forceMatrix1[0][1];    
+  var f_iz = forceMatrix1[0][2];    
+  
+  var f_jx = forceMatrix1[1][0];
+  var f_jy = forceMatrix1[1][1];
+  var f_jz = forceMatrix1[1][2];
+
+  var f_kx = forceMatrix1[2][0];
+  var f_ky = forceMatrix1[2][1];
+  var f_kz = forceMatrix1[2][2];
+  
+  //Coordenadas en x, y, z, de los 3 nodos de la base, que se usaron para las condiciones de contorno.
+  var xi = newNodeX[lownode1];
+  var xj = newNodeX[lownode2];
+  var xk = newNodeX[lownode3];
+  
+  var yi = newNodeY[lownode1];
+  var yj = newNodeY[lownode2];
+  var yk = newNodeY[lownode3];
+
+  var zi = newNodeZ[lownode1];
+  var zj = newNodeZ[lownode2];
+  var zk = newNodeZ[lownode3];
+  
   //SUMATORIA DE FUERZAS:
 
-  var matrixSumF = [[newUnit_xX[ii], newUnit_yX[ii], newUnit_zX[ii]],[[newUnit_xY[ii], newUnit_yY[ii], newUnit_zY[ii]]],[[newUnit_xZ[ii], newUnit_yZ[ii], newUnit_zZ[ii]]]];
-  var coefF;
+  var Px; var Py; var Pz;
+  
+  Px = -(f_ix+f_jx+f_kx); //Suma las fuerzas X de los 3 nodos de la base en las que se aplico la condicion de contorno.
+    Py = -(f_iy+f_jy+f_ky); //Suma las fuerzas Y de los 3 nodos de la base en las que se aplico la condicion de contorno.
+    Pz = -(f_iz+f_jz+f_kz) //Suma las fuerzas Z de los 3 nodos de la base en las que se aplico la condicion de contorno.
 
+    //var P = Math.pow((Math.pow(Px,2) + Math.pow(Py,2) + Math.pow(Pz,2),0.5));
+    var vectP = [Px, Py, Pz];  
+    
+    //console.log(vectP);
+    //console.log(NodeZ);
+    //console.log(displaceMatrix1);
+    //console.log(newNodeZ);
+    //console.log(zk);
 
+  //SUMATORIA DE MOMENTOS:
+    
+  var Mx; var My; var Mz;
 
+  Mx = zi*f_iy + zj*f_jy + zk*f_ky - yi*f_iz - yj*f_jz - yk*f_kz + z_cut*Py - y_cut*Pz; //Suma los momentos X causado por la fuerza P, y las fuerzas de los 3 nodos de la base en las que se aplico la condicion de contorno.
+    My = xi*f_iz + xj*f_jz + xk*f_kz - zi*f_ix - zj*f_jx - zk*f_kx + x_cut*Pz - z_cut*Px; //Suma los momentos Y causado por la fuerza P, y las fuerzas de los 3 nodos de la base en las que se aplico la condicion de contorno.
+    Mz = yi*f_ix + yj*f_jx + yk*f_kx - xi*f_iy - xj*f_jy - xk*f_ky + y_cut*Px - x_cut*Py; //Suma los momentos Z causado por la fuerza P, y las fuerzas de los 3 nodos de la base en las que se aplico la condicion de contorno.
 
-    //FUNCIONES
+    //var M = Math.sqrt(Mx*Mx + My*My + Mz*Mz);
+    var vectM = [Mx, My, Mz];
+    
+    //Descomponer P y M en direcciones e,n y s del NODO.
+    var dir_s = [u_sX[ii],u_sY[ii],u_sZ[ii]];
+    var dir_n = [u_nX[ii],u_nY[ii],u_nZ[ii]];
+    var dir_e = [u_eX[ii],u_eY[ii],u_eZ[ii]];
+    
+    
+    //var Ps = mathjs.dot(vectP,dir_s);
+    //var Pn = mathjs.dot(vectP,dir_n);
+    //var Pe = mathjs.dot(vectP,dir_e);
+
+    var Ps = Px*u_sX[ii]+Py*u_sY[ii]+Pz*u_sZ[ii];
+    var Pn = Px*u_nX[ii]+Py*u_nY[ii]+Pz*u_nZ[ii];
+    var Pe = Px*u_eX[ii]+Py*u_eY[ii]+Pz*u_eZ[ii];
+    
+    //var Ms = mathjs.dot(vectM,dir_s);
+    //var Mn = mathjs.dot(vectM,dir_n);
+    //var Me = mathjs.dot(vectM,dir_e);
+    
+    var Ms = Mx*u_sX[ii]+My*u_sY[ii]+Mz*u_sZ[ii];
+    var Mn = Mx*u_nX[ii]+My*u_nY[ii]+Mz*u_nZ[ii];
+    var Me = Mx*u_eX[ii]+My*u_eY[ii]+Mz*u_eZ[ii];
+    
+    //Esfuerzos:
+    var ang = 0; //Diametro interior. 
+    var e = resorte.alambre*Math.cos(ang*Math.PI/180);
+    var n = resorte.alambre*Math.sin(ang*Math.PI/180);
+    var Rdef = Math.pow((Math.pow(z_cut,2)+Math.pow(x_cut,2)),0.5);
+    var H = newElemY[ii+1]/newLong[ii+1];   
+    var K = 1/(Rdef*Math.pow(H,2));
+    var G = 1-K*e;
+    
+    var tau_e = (Pe/area - Ms/inerciapolar*e)/G;
+    var tau_n = (Pn/area + Ms/inerciapolar*n)/G;
+    var sigma_s = (Ps/area + Me/inercia*n - Mn/inercia*e)/G
+
+    
+  //  console.log(u_sX);
+  //  console.log(u_eY);
+  //  console.log(vectP);
+  //  console.log(vectM);
+  //  console.log([Ps,Pn,Pe,Ms,Mn,Me]);
+    var esf = [tau_e, tau_n, sigma_s];
+    acumvect.push(esf);
+  }
+
+  console.log(Long);
+  console.log(newLong);    
+    
+    
+//FUNCIONES
     //Comentar lo de abajo cuando funcione lo de separar las hojas
     
     function Node_coordX (nodeValue){ //Calcula coordenada X del nodo. Entrada: Posicion angular en grados sexagesimales.
